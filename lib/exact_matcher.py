@@ -18,6 +18,19 @@ _LEGAL_SUFFIXES = re.compile(
 
 _LEADING_THE = re.compile(r"^the\s+", re.IGNORECASE)
 _MULTI_SPACE = re.compile(r"\s+")
+_PARENTHETICAL = re.compile(r"\s*\([^)]*\)")
+
+# Common abbreviation expansions for normalization
+_ABBREVIATIONS = [
+    (re.compile(r"\bbros?\.?\b"), "brothers"),
+    (re.compile(r"\b&\b"), "and"),
+    (re.compile(r"\bintl\.?\b"), "international"),
+    (re.compile(r"\bsvcs\.?\b"), "services"),
+    (re.compile(r"\bmfg\.?\b"), "manufacturing"),
+    (re.compile(r"\bdist\.?\b"), "distribution"),
+    (re.compile(r"\bgrp\.?\b"), "group"),
+    (re.compile(r"\bmgmt\.?\b"), "management"),
+]
 
 
 def normalize_name(name: str) -> str:
@@ -25,10 +38,14 @@ def normalize_name(name: str) -> str:
     name = name.strip()
     name = _MULTI_SPACE.sub(" ", name)
     name = name.lower()
+    name = _PARENTHETICAL.sub("", name).strip()
     name = _LEGAL_SUFFIXES.sub("", name).strip()
     name = _LEGAL_SUFFIXES.sub("", name).strip()
     name = name.rstrip(".,;")
     name = _LEADING_THE.sub("", name).strip()
+    for pattern, replacement in _ABBREVIATIONS:
+        name = pattern.sub(replacement, name)
+    name = _MULTI_SPACE.sub(" ", name).strip()
     return name
 
 
@@ -54,14 +71,15 @@ def _find_substring_match(
     normalized_source: str,
     lookup_index: Dict[str, LookupEntry],
 ) -> Optional[LookupEntry]:
-    """Check if any lookup name is contained within the source string.
+    """Check if any lookup name contains the source or vice versa.
     Returns the best (longest) match to avoid short false positives, or None."""
     best_entry = None
     best_len = 0
+    src_len = len(normalized_source)
     for lookup_key, entry in lookup_index.items():
-        if len(lookup_key) < 3:
+        if len(lookup_key) < 3 or src_len < 3:
             continue
-        if lookup_key in normalized_source:
+        if lookup_key in normalized_source or normalized_source in lookup_key:
             if len(lookup_key) > best_len:
                 best_len = len(lookup_key)
                 best_entry = entry

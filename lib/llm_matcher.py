@@ -9,21 +9,32 @@ import anthropic
 from lib.models import SupplierRecord, LookupEntry, MatchResult, MatchMethod
 from lib import config
 
-SYSTEM_PROMPT = """You are a supplier name matching specialist. You will be given a list of known supplier names (the "lookup list") and a batch of supplier names to match (the "query list"). For each query name, determine if it matches any supplier in the lookup list.
+SYSTEM_PROMPT = """You are a supplier name matching specialist. You will be given a list of known supplier names (the "lookup list") and a batch of query strings to match (the "query list"). For each query string, determine if it matches any supplier in the lookup list.
 
-Rules:
-- A match means the query name and lookup name refer to the SAME real-world company/supplier, despite differences in spelling, abbreviation, legal suffixes, punctuation, or formatting.
-- Common variations to consider: abbreviations (Intl vs International), legal suffixes (Ltd, Inc, Corp, GmbH), punctuation differences, "The" prefix, ampersand vs "and", regional name variations, typos.
-- If you are not confident in a match, set matched_name to null.
-- Never fabricate a supplier name that is not in the lookup list. The matched_name MUST be copied exactly from the lookup list.
+CRITICAL: The query strings are often NOT clean supplier names. They are frequently document titles, contract names, file names, or descriptions that CONTAIN a supplier name embedded within them. Examples:
+- "Approach Personnel Contract - Amendment Oct25" contains supplier "Approach Personnel"
+- "5Flow_Phoenix_OrderForm_2025" contains supplier "5Flow" or "Phoenix"
+- "BCL Phoenix- Amended terms - 2024" contains supplier "BCL Phoenix"
+- "CHARTERHOUSE (KONICA MINOLTA) Service Agreement" contains supplier "Charterhouse" or "Konica Minolta"
+
+Your task:
+1. First, EXTRACT the likely supplier/company name from each query string by stripping away contract types, dates, file extensions, order numbers, and other non-name parts.
+2. Then, match the extracted name against the lookup list.
+
+Matching rules:
+- A match means the extracted supplier name and a lookup name refer to the SAME real-world company/supplier.
+- Consider: abbreviations (Intl vs International), legal suffixes (Ltd, Inc, Corp, GmbH), punctuation differences, "The" prefix, ampersand vs "and", underscores vs spaces, partial names (e.g. "BCL" matching "BCL Medical"), parent/subsidiary relationships, and typos.
+- If multiple lookup entries could match, pick the best one.
+- If you are not confident in a match (confidence < 0.6), set matched_name to null.
+- Never fabricate a supplier name. The matched_name MUST be copied EXACTLY from the lookup list, character for character.
 
 Respond with ONLY a JSON array. No explanation, no markdown fencing.
 Each element must have exactly these fields:
 {
-  "source_name": "<exact query name as given>",
+  "source_name": "<exact query string as given>",
   "matched_name": "<exact lookup name as given, or null if no match>",
   "confidence": <float 0.0 to 1.0>,
-  "reasoning": "<brief one-line explanation>"
+  "reasoning": "<brief explanation of what supplier name you extracted and why it matches>"
 }"""
 
 
@@ -158,7 +169,7 @@ def call_llm_with_retry(
     try:
         response = client.messages.create(
             model=config.MODEL_ID,
-            max_tokens=4096,
+            max_tokens=8192,
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_message}],
             temperature=0.0,

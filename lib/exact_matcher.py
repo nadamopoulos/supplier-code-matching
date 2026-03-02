@@ -1,6 +1,6 @@
 import re
 import sys
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from lib.models import SupplierRecord, LookupEntry, MatchResult, MatchMethod
 from lib import config
@@ -50,12 +50,30 @@ def build_lookup_index(entries: List[LookupEntry]) -> Dict[str, LookupEntry]:
     return index
 
 
+def _find_substring_match(
+    normalized_source: str,
+    lookup_index: Dict[str, LookupEntry],
+) -> Optional[LookupEntry]:
+    """Check if any lookup name is contained within the source string.
+    Returns the best (longest) match to avoid short false positives, or None."""
+    best_entry = None
+    best_len = 0
+    for lookup_key, entry in lookup_index.items():
+        if len(lookup_key) < 3:
+            continue
+        if lookup_key in normalized_source:
+            if len(lookup_key) > best_len:
+                best_len = len(lookup_key)
+                best_entry = entry
+    return best_entry
+
+
 def exact_match(
     records: List[SupplierRecord],
     lookup_index: Dict[str, LookupEntry],
 ) -> Tuple[List[MatchResult], List[SupplierRecord]]:
     """
-    Phase 1: Exact matching after normalization.
+    Phase 1: Exact matching after normalization, with substring fallback.
     Returns (matched_results, unmatched_records).
     """
     matched: List[MatchResult] = []
@@ -81,6 +99,19 @@ def exact_match(
                 )
             )
         else:
-            unmatched.append(record)
+            entry = _find_substring_match(key, lookup_index)
+            if entry:
+                matched.append(
+                    MatchResult(
+                        unique_id=record.unique_id,
+                        supplier_name=record.supplier_name,
+                        matched_supplier_name=entry.supplier_name,
+                        supplier_code=entry.supplier_code,
+                        match_method=MatchMethod.EXACT,
+                        confidence=0.9,
+                    )
+                )
+            else:
+                unmatched.append(record)
 
     return matched, unmatched

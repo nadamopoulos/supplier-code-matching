@@ -1,5 +1,5 @@
 # Claude API
-MODEL_ID = "claude-haiku-4-5-20251001"
+MODEL_ID = "claude-sonnet-4-20250514"
 
 # Batching
 LLM_BATCH_SIZE = 20

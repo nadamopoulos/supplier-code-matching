@@ -6,9 +6,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Add project root to path so lib/ is importable
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from lib.models import SupplierRecord, LookupEntry, MatchResult, MatchMethod
 from lib import config
 from lib.exact_matcher import build_lookup_index, exact_match

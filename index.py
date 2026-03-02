@@ -1,9 +1,12 @@
 import sys
 import os
+from pathlib import Path
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from lib.models import SupplierRecord, LookupEntry, MatchResult, MatchMethod
@@ -22,9 +25,11 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["POST"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
+
+PUBLIC_DIR = Path(__file__).parent / "public"
 
 
 # --- Request / Response models ---
@@ -182,3 +187,18 @@ def match_llm_batch(req: LLMBatchRequest):
             ))
 
     return LLMBatchResponse(results=results)
+
+
+# --- Static files & frontend ---
+
+@app.get("/")
+def serve_index():
+    return FileResponse(PUBLIC_DIR / "index.html")
+
+
+app.mount("/", StaticFiles(directory=PUBLIC_DIR), name="static")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supplier Name Matcher</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Supplier Name Matcher</h1>
+      <p>Match supplier names across CSVs using exact + LLM fuzzy matching</p>
+    </div>
+
+    <!-- Card 1: Source CSV -->
+    <div class="card">
+      <div class="card-title">1. Source CSV (contains supplier names to match)</div>
+      <div class="file-upload">
+        <span id="csv1-info" class="file-info">No file selected</span>
+        <input type="file" id="csv1-input" accept=".csv">
+        <button class="btn btn-secondary" onclick="document.getElementById('csv1-input').click()">Browse...</button>
+      </div>
+      <div class="form-row">
+        <label for="csv1-id-col">Unique ID column:</label>
+        <select id="csv1-id-col" disabled><option value="">-- load CSV first --</option></select>
+      </div>
+      <div class="form-row">
+        <label for="csv1-name-col">Supplier Name column:</label>
+        <select id="csv1-name-col" disabled><option value="">-- load CSV first --</option></select>
+      </div>
+    </div>
+
+    <!-- Card 2: Lookup CSV -->
+    <div class="card">
+      <div class="card-title">2. Lookup CSV (contains supplier codes)</div>
+      <div class="file-upload">
+        <span id="csv2-info" class="file-info">No file selected</span>
+        <input type="file" id="csv2-input" accept=".csv">
+        <button class="btn btn-secondary" onclick="document.getElementById('csv2-input').click()">Browse...</button>
+      </div>
+      <div class="form-row">
+        <label for="csv2-name-col">Supplier Name column:</label>
+        <select id="csv2-name-col" disabled><option value="">-- load CSV first --</option></select>
+      </div>
+      <div class="form-row">
+        <label for="csv2-code-col">Supplier Code column:</label>
+        <select id="csv2-code-col" disabled><option value="">-- load CSV first --</option></select>
+      </div>
+    </div>
+
+    <!-- Card 3: API Key -->
+    <div class="card">
+      <div class="card-title">3. Anthropic API Key (for LLM fuzzy matching)</div>
+      <div class="form-row">
+        <label for="api-key">API Key:</label>
+        <input type="password" id="api-key" placeholder="sk-ant-...">
+      </div>
+      <div class="hint">Leave blank to run Phase 1 (exact matching) only</div>
+    </div>
+
+    <!-- Run -->
+    <div class="run-section">
+      <button id="run-btn" class="btn btn-primary" onclick="runMatching()">Run Matching</button>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-section card" id="progress-card" style="display: none;">
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-status" id="progress-status"></div>
+    </div>
+
+    <!-- Results -->
+    <div class="card" id="results-card" style="display: none;">
+      <div class="card-title">Results</div>
+      <div class="summary" id="summary"></div>
+      <div class="download-section">
+        <button class="btn btn-green" onclick="downloadCSV()">Download CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Unique ID</th>
+              <th>Supplier Name</th>
+              <th>Matched Name</th>
+              <th>Code</th>
+              <th>Method</th>
+              <th>Conf.</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

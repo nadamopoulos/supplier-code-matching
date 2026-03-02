@@ -6,3 +6,5 @@ dist/
 build/
 .DS_Store
 matched_output.csv
+.vercel
+node_modules

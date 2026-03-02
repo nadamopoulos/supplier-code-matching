@@ -1,0 +1,16 @@
+InvoiceID,SupplierName,Amount
+INV-001,Acme Corp,5000.00
+INV-002,ACME CORPORATION,3200.00
+INV-003,Global Supply Co.,1500.00
+INV-004,Globl Suppy,800.00
+INV-005,Pacific Trading Ltd,12000.00
+INV-006,Pacific Tradng Corp,9500.00
+INV-007,Siemens AG,7800.00
+INV-008,Seimens,4300.00
+INV-009,Johnson & Johnson,2100.00
+INV-010,Johnson and Johnson Inc,6700.00
+INV-011,Unknown Vendor XYZ,1100.00
+INV-012,The Boeing Company,15000.00
+INV-013,Boeing Co,8900.00
+INV-014,Microsoft Corp.,22000.00
+INV-015,Microsft Corporation,18000.00
